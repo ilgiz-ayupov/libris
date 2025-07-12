@@ -32,7 +32,12 @@ func NewApp() *App {
 		return nil
 	}
 
-	db.AutoMigrate(&entities.Book{})
+	db.AutoMigrate(
+		&entities.BookAuthor{
+			Name: "Ilgiz Ayupov",
+		},
+		&entities.Book{},
+	)
 
 	bookRepo := postgres.NewBookRepository()
 

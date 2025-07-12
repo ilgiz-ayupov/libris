@@ -40,7 +40,7 @@ func (h *BookHandler) createBook(c *fiber.Ctx) error {
 	type Param struct {
 		Title       string
 		Description string
-		Author      string
+		AuthorID    int
 		Price       float64
 		Year        int
 	}
@@ -62,7 +62,7 @@ func (h *BookHandler) createBook(c *fiber.Ctx) error {
 		tx,
 		p.Title,
 		p.Description,
-		p.Author,
+		p.AuthorID,
 		p.Price,
 		p.Year,
 	); err != nil {

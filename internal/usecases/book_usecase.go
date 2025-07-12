@@ -27,14 +27,14 @@ func (u *BookUseCase) Create(
 	tx *gorm.DB,
 	title string,
 	description string,
-	author string,
+	authorID int,
 	price float64,
 	year int,
 ) error {
 	if err := u.bookRepo.Create(tx, entities.NewBook(
 		title,
 		description,
-		author,
+		authorID,
 		price,
 		year,
 	)); err != nil {
