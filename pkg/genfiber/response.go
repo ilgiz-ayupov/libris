@@ -12,6 +12,13 @@ func SendData(c *fiber.Ctx, data any) error {
 	})
 }
 
+func SendCreatedData(c *fiber.Ctx, data any) error {
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+		"error": "",
+		"data":  data,
+	})
+}
+
 func SendError(c *fiber.Ctx, err error) error {
 	var status int
 	switch err {

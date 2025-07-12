@@ -4,6 +4,7 @@ import (
 	"log/slog"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/ilgiz-ayupov/libris/internal/entities"
 	"github.com/ilgiz-ayupov/libris/internal/usecases"
 	"github.com/ilgiz-ayupov/libris/pkg/genfiber"
 	"gorm.io/gorm"
@@ -51,30 +52,17 @@ func (h *BookHandler) createBook(c *fiber.Ctx) error {
 		return genfiber.SendError(c, err)
 	}
 
-	tx := h.db.Begin()
-	if err := tx.Error; err != nil {
-		h.log.Error("не удалось открыть транзакцию", "error", err)
-		return genfiber.SendError(c, err)
-	}
-	defer tx.Rollback()
+	return genfiber.ExecReturn(c, func(tx *gorm.DB) (*entities.Book, error) {
+		return h.bookUseCase.CreateBook(
+			tx,
+			p.Title,
+			p.Description,
+			p.AuthorID,
+			p.Price,
+			p.Year,
+		)
+	}, h.db, h.log)
 
-	if err := h.bookUseCase.Create(
-		tx,
-		p.Title,
-		p.Description,
-		p.AuthorID,
-		p.Price,
-		p.Year,
-	); err != nil {
-		return genfiber.SendError(c, err)
-	}
-
-	if err := tx.Commit().Error; err != nil {
-		h.log.Error("не удалось зафиксировать транзакцию", "error", err)
-		return genfiber.SendError(c, err)
-	}
-
-	return c.SendStatus(fiber.StatusCreated)
 }
 
 func (h *BookHandler) findBooks(c *fiber.Ctx) error {
@@ -83,18 +71,13 @@ func (h *BookHandler) findBooks(c *fiber.Ctx) error {
 	endYear := c.QueryInt("end_year")
 	author := c.Query("author")
 
-	tx := h.db.Begin()
-	defer tx.Rollback()
-
-	books, err := h.bookUseCase.FindBooks(
-		tx,
-		q,
-		startYear,
-		endYear,
-		author,
-	)
-	if err != nil {
-		return genfiber.SendError(c, err)
-	}
-	return genfiber.SendData(c, books)
+	return genfiber.LoadData(c, func(tx *gorm.DB) ([]entities.Book, error) {
+		return h.bookUseCase.FindBooks(
+			tx,
+			q,
+			startYear,
+			endYear,
+			author,
+		)
+	}, h.db, h.log)
 }

@@ -23,25 +23,27 @@ func NewBookUseCase(
 	}
 }
 
-func (u *BookUseCase) Create(
+func (u *BookUseCase) CreateBook(
 	tx *gorm.DB,
 	title string,
 	description string,
 	authorID int,
 	price float64,
 	year int,
-) error {
-	if err := u.bookRepo.Create(tx, entities.NewBook(
+) (*entities.Book, error) {
+	book := entities.NewBook(
 		title,
 		description,
 		authorID,
 		price,
 		year,
-	)); err != nil {
+	)
+
+	if err := u.bookRepo.Create(tx, book); err != nil {
 		u.log.Error("не удалось создать книгу", "error", err)
-		return entities.ErrInternalError
+		return nil, entities.ErrInternalError
 	}
-	return nil
+	return book, nil
 }
 
 func (u *BookUseCase) FindBooks(
