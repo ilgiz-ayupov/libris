@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"log"
 	"log/slog"
 
@@ -9,13 +8,15 @@ import (
 	"github.com/ilgiz-ayupov/libris/config"
 	"github.com/ilgiz-ayupov/libris/internal/adapters/handlers"
 	"github.com/ilgiz-ayupov/libris/internal/adapters/postgres"
+	"github.com/ilgiz-ayupov/libris/internal/entities"
 	"github.com/ilgiz-ayupov/libris/internal/usecases"
 	"github.com/ilgiz-ayupov/libris/pkg/logger"
 	"github.com/ilgiz-ayupov/libris/pkg/pgdb"
+	"gorm.io/gorm"
 )
 
 type App struct {
-	db   *sql.DB
+	db   *gorm.DB
 	log  *slog.Logger
 	conf *config.Config
 
@@ -23,12 +24,15 @@ type App struct {
 }
 
 func NewApp() *App {
+	log := logger.Init()
+
 	db, err := pgdb.Connect(config.PostgresConnectURL())
 	if err != nil {
-		log.Fatalln(err)
+		log.Error("не удалось подключиться к БД", "error", err)
+		return nil
 	}
 
-	log := logger.Init()
+	db.AutoMigrate(&entities.Book{})
 
 	bookRepo := postgres.NewBookRepository()
 

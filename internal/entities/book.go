@@ -1,17 +1,31 @@
 package entities
 
 import (
-	"database/sql"
-	"time"
+	"gorm.io/gorm"
 )
 
 type Book struct {
-	ID          int          `json:"id"`
-	Title       string       `json:"title"`
-	Description string       `json:"description"`
-	Author      string       `json:"author"`
-	Price       float64      `json:"price"`
-	Year        int          `json:"year"`
-	CreatedDate time.Time    `json:"created_date"`
-	DeletedDate sql.NullTime `json:"deleted_date"`
+	gorm.Model
+	ID          int    `gorm:"primaryKey;autoIncrement"`
+	Title       string `gorm:"unique; not null"`
+	Description string
+	Author      string  `gorm:"not null"`
+	Price       float64 `gorm:"not null"`
+	Year        int     `gorm:"not null"`
+}
+
+func NewBook(
+	title string,
+	description string,
+	author string,
+	price float64,
+	year int,
+) *Book {
+	return &Book{
+		Title:       title,
+		Description: description,
+		Author:      author,
+		Price:       price,
+		Year:        year,
+	}
 }

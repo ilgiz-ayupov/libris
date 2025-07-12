@@ -1,9 +1,8 @@
 package postgres
 
 import (
-	"database/sql"
-
 	"github.com/ilgiz-ayupov/libris/internal/entities"
+	"gorm.io/gorm"
 )
 
 type bookRepository struct{}
@@ -12,26 +11,31 @@ func NewBookRepository() *bookRepository {
 	return &bookRepository{}
 }
 
-func (r *bookRepository) FindBookList(tx *sql.Tx) ([]entities.Book, error) {
-	query := `
-		SELECT b.book_id, b.title, b.description, b.author, b.price, b.year, b.created_date, b.deleted_date
-		FROM books b
-	`
+func (r *bookRepository) Create(tx *gorm.DB, book *entities.Book) error {
+	return tx.Create(book).Error
+}
 
-	rows, err := tx.Query(query)
-	if err != nil {
+func (r *bookRepository) FindBooks(
+	tx *gorm.DB,
+	q string,
+	startYear, endYear int,
+	author string,
+) ([]entities.Book, error) {
+	query := tx.Model(&entities.Book{})
+
+	if q != "" {
+		query = query.Where("title ILIKE ?", "%"+q+"%")
+	}
+	if startYear != 0 && endYear != 0 {
+		query = query.Where("year BETWEEN ? AND ?", startYear, endYear)
+	}
+	if author != "" {
+		query = query.Where("author ILIKE ?", "%"+author+"%")
+	}
+
+	var books []entities.Book
+	if err := query.Find(&books).Error; err != nil {
 		return nil, err
 	}
-
-	var bookList []entities.Book
-	for rows.Next() {
-		var b entities.Book
-		if err := rows.Scan(&b.ID, &b.Title, &b.Description, &b.Author, &b.Price, &b.Year, &b.CreatedDate, &b.DeletedDate); err != nil {
-			return nil, err
-		}
-
-		bookList = append(bookList, b)
-	}
-
-	return bookList, nil
+	return books, nil
 }

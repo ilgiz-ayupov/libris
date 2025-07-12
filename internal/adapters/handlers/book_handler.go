@@ -1,24 +1,24 @@
 package handlers
 
 import (
-	"database/sql"
 	"log/slog"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/ilgiz-ayupov/libris/internal/entities"
 	"github.com/ilgiz-ayupov/libris/internal/usecases"
+	"github.com/ilgiz-ayupov/libris/pkg/genfiber"
+	"gorm.io/gorm"
 )
 
 type BookHandler struct {
 	engine      *fiber.App
-	db          *sql.DB
+	db          *gorm.DB
 	log         *slog.Logger
 	bookUseCase *usecases.BookUseCase
 }
 
 func NewBookHandler(
 	engine *fiber.App,
-	db *sql.DB,
+	db *gorm.DB,
 	log *slog.Logger,
 	bookUseCase *usecases.BookUseCase,
 ) *BookHandler {
@@ -32,24 +32,69 @@ func NewBookHandler(
 
 func (h *BookHandler) RegisterRoutes() {
 	g := h.engine.Group("/books")
-	g.Get("/", h.findBookList)
+	g.Post("/", h.createBook)
+	g.Get("/", h.findBooks)
 }
 
-func (h *BookHandler) findBookList(c *fiber.Ctx) error {
-	tx, err := h.db.Begin()
-	if err != nil {
-		h.log.Info("не удалось открыть транзакцию", "error", err)
-		return entities.ErrInternalError
+func (h *BookHandler) createBook(c *fiber.Ctx) error {
+	type Param struct {
+		Title       string
+		Description string
+		Author      string
+		Price       float64
+		Year        int
+	}
+
+	var p Param
+	if err := c.BodyParser(&p); err != nil {
+		h.log.Debug("получены некорректные параметры", "error", err)
+		return genfiber.SendError(c, err)
+	}
+
+	tx := h.db.Begin()
+	if err := tx.Error; err != nil {
+		h.log.Error("не удалось открыть транзакцию", "error", err)
+		return genfiber.SendError(c, err)
 	}
 	defer tx.Rollback()
 
-	bookList, err := h.bookUseCase.FindBookList(tx)
-	switch err {
-	case nil:
-		return c.JSON(bookList)
-	case entities.ErrNoData:
-		return c.SendStatus(fiber.StatusNotFound)
-	default:
-		return c.SendStatus(fiber.StatusInternalServerError)
+	if err := h.bookUseCase.Create(
+		tx,
+		p.Title,
+		p.Description,
+		p.Author,
+		p.Price,
+		p.Year,
+	); err != nil {
+		return genfiber.SendError(c, err)
 	}
+
+	if err := tx.Commit().Error; err != nil {
+		h.log.Error("не удалось зафиксировать транзакцию", "error", err)
+		return genfiber.SendError(c, err)
+	}
+
+	return c.SendStatus(fiber.StatusCreated)
+}
+
+func (h *BookHandler) findBooks(c *fiber.Ctx) error {
+	q := c.Query("q")
+	startYear := c.QueryInt("start_year")
+	endYear := c.QueryInt("end_year")
+	author := c.Query("author")
+
+	tx := h.db.Begin()
+	defer tx.Rollback()
+
+	books, err := h.bookUseCase.FindBooks(
+		tx,
+		q,
+		startYear,
+		endYear,
+		author,
+	)
+	if err != nil {
+		return genfiber.SendError(c, err)
+	}
+	return genfiber.SendData(c, books)
 }

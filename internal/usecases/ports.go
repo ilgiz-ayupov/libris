@@ -1,11 +1,11 @@
 package usecases
 
 import (
-	"database/sql"
-
 	"github.com/ilgiz-ayupov/libris/internal/entities"
+	"gorm.io/gorm"
 )
 
 type BookRepository interface {
-	FindBookList(tx *sql.Tx) ([]entities.Book, error)
+	Create(tx *gorm.DB, book *entities.Book) error
+	FindBooks(tx *gorm.DB, q string, startYear, endYear int, author string) ([]entities.Book, error)
 }
