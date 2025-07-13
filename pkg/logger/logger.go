@@ -1,13 +1,8 @@
 package logger
 
-import (
-	"log/slog"
-	"os"
-)
-
-func Init() *slog.Logger {
-	return slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-		AddSource: true,
-		Level:     slog.LevelDebug,
-	}))
+type Logger interface {
+	Info(msg string, args ...any)
+	Error(msg string, args ...any)
+	Debug(msg string, args ...any)
+	Warn(msg string, args ...any)
 }

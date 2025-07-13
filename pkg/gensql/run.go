@@ -1,56 +1,58 @@
 package gensql
 
 import (
-	"log/slog"
-
 	"github.com/ilgiz-ayupov/libris/internal/entities"
+	"github.com/ilgiz-ayupov/libris/pkg/logger"
 )
 
-func LoadData[T any](fn func() (T, error), log *slog.Logger, errNotFound error, msg string, attrs ...any) (T, error) {
+func LoadData[T any](fn func() (T, error), log logger.Logger, errNotFound error, msg string, logArgs ...any) (T, error) {
 	var zero T
+
 	data, err := fn()
 	switch err {
 	case nil:
 		return data, nil
 	case entities.ErrNoData:
-		log.With(attrs...).Warn(msg + errNotFound.Error())
+		log.Warn(msg+errNotFound.Error(), logArgs...)
 		return zero, errNotFound
 	default:
-		attrs = append(attrs, slog.String("error", err.Error()))
-		log.With(attrs...).Error(msg)
+		logArgs = append(logArgs, "error", err)
+		log.Error(msg, logArgs...)
 		return zero, entities.ErrInternalError
 	}
 }
 
-func LoadCanNoData[T any](fn func() (T, error), log *slog.Logger, errNotFound error, msg string, attrs ...any) (T, error) {
+func LoadCanNoData[T any](fn func() (T, error), log logger.Logger, errNotFound error, msg string, logArgs ...any) (T, error) {
 	var zero T
+
 	data, err := fn()
 	switch err {
 	case nil:
 		return data, nil
 	case entities.ErrNoData:
-		log.With(attrs...).Warn(msg + errNotFound.Error())
+		log.Warn(msg+errNotFound.Error(), logArgs...)
 		return zero, nil
 	default:
-		attrs = append(attrs, slog.String("error", err.Error()))
-		log.With(attrs...).Error(msg)
+		logArgs = append(logArgs, "error", err.Error)
+		log.Error(msg, logArgs...)
 		return zero, entities.ErrInternalError
 	}
 }
 
-func LoadRequiredData[T any](fn func() (T, error), log *slog.Logger, errNotFound error, msg string, attrs ...any) (T, error) {
+func LoadRequiredData[T any](fn func() (T, error), log logger.Logger, errNotFound error, msg string, logArgs ...any) (T, error) {
 	var zero T
+
 	data, err := fn()
 	switch err {
 	case nil:
 		return data, nil
 	case entities.ErrNoData:
-		attrs = append(attrs, slog.String("error", errNotFound.Error()))
-		log.With(attrs...).Error(msg)
+		logArgs = append(logArgs, "error", errNotFound)
+		log.Error(msg, logArgs...)
 		return zero, errNotFound
 	default:
-		attrs = append(attrs, slog.String("error", err.Error()))
-		log.With(attrs...).Error(msg)
+		logArgs = append(logArgs, "error", err)
+		log.Error(msg, logArgs...)
 		return zero, entities.ErrInternalError
 	}
 }

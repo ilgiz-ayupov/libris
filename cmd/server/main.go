@@ -1,9 +1,6 @@
 package main
 
 import (
-	"log"
-	"log/slog"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/ilgiz-ayupov/libris/config"
 	"github.com/ilgiz-ayupov/libris/internal/adapters/handlers"
@@ -17,14 +14,14 @@ import (
 
 type App struct {
 	db   *gorm.DB
-	log  *slog.Logger
+	log  logger.Logger
 	conf *config.Config
 
 	bookUseCase *usecases.BookUseCase
 }
 
 func NewApp() *App {
-	log := logger.Init()
+	log := logger.NewSlogLogger()
 
 	db, err := pgdb.Connect(config.PostgresConnectURL())
 	if err != nil {
@@ -53,12 +50,12 @@ func NewApp() *App {
 }
 
 func (a *App) StartServer() error {
-	app := fiber.New()
+	app := fiber.New(fiber.Config{})
 
 	bookHandler := handlers.NewBookHandler(app, a.db, a.log, a.bookUseCase)
 	bookHandler.RegisterRoutes()
 
-	log.Println("Сервер запущен на", a.conf.Server.Address)
+	a.log.Info("Сервер запущен", "address", a.conf.Server.Address)
 	return app.Listen(a.conf.Server.Address)
 }
 
@@ -66,6 +63,6 @@ func main() {
 	app := NewApp()
 
 	if err := app.StartServer(); err != nil {
-		log.Fatalln(err)
+		app.log.Error("не удалось запустить сервер", "error", err)
 	}
 }

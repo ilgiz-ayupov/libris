@@ -1,14 +1,13 @@
 package genfiber
 
 import (
-	"log/slog"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/ilgiz-ayupov/libris/internal/entities"
+	"github.com/ilgiz-ayupov/libris/pkg/logger"
 	"gorm.io/gorm"
 )
 
-func Exec(c *fiber.Ctx, fn func(tx *gorm.DB) error, db *gorm.DB, log *slog.Logger) error {
+func Exec(c *fiber.Ctx, fn func(tx *gorm.DB) error, db *gorm.DB, log logger.Logger) error {
 	tx := db.Begin()
 	if err := tx.Error; err != nil {
 		log.Error("не удалось открыть транзакцию", "error", err)
@@ -29,7 +28,7 @@ func Exec(c *fiber.Ctx, fn func(tx *gorm.DB) error, db *gorm.DB, log *slog.Logge
 	return c.SendStatus(fiber.StatusOK)
 }
 
-func ExecReturn[T any](c *fiber.Ctx, fn func(tx *gorm.DB) (T, error), db *gorm.DB, log *slog.Logger) error {
+func ExecReturn[T any](c *fiber.Ctx, fn func(tx *gorm.DB) (T, error), db *gorm.DB, log logger.Logger) error {
 	tx := db.Begin()
 	if err := tx.Error; err != nil {
 		log.Error("не удалось открыть транзакцию", "error", err)
@@ -50,7 +49,7 @@ func ExecReturn[T any](c *fiber.Ctx, fn func(tx *gorm.DB) (T, error), db *gorm.D
 	return SendCreatedData(c, data)
 }
 
-func LoadData[T any](c *fiber.Ctx, fn func(tx *gorm.DB) (T, error), db *gorm.DB, log *slog.Logger) error {
+func LoadData[T any](c *fiber.Ctx, fn func(tx *gorm.DB) (T, error), db *gorm.DB, log logger.Logger) error {
 	tx := db.Begin()
 	if err := tx.Error; err != nil {
 		log.Error("не удалось открыть транзакцию", "error", err)

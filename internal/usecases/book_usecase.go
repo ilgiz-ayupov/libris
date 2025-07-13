@@ -1,22 +1,21 @@
 package usecases
 
 import (
-	"log/slog"
-
 	"github.com/ilgiz-ayupov/libris/internal/entities"
 	"github.com/ilgiz-ayupov/libris/pkg/gensql"
+	"github.com/ilgiz-ayupov/libris/pkg/logger"
 	"gorm.io/gorm"
 )
 
 type BookUseCase struct {
-	log               *slog.Logger
+	log               logger.Logger
 	bookRepo          BookRepository
 	bookAuthorRepo    BookAuthorRepository
 	bookPublisherRepo BookPublisherRepository
 }
 
 func NewBookUseCase(
-	log *slog.Logger,
+	log logger.Logger,
 	bookRepo BookRepository,
 	bookAuthorRepo BookAuthorRepository,
 	bookPublisherRepo BookPublisherRepository,
