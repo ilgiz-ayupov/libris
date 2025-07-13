@@ -1,7 +1,14 @@
 package entities
 
 import (
+	"errors"
+
 	"gorm.io/gorm"
+)
+
+var (
+	ErrBookNotFound  = errors.New("книга не найдена")
+	ErrBooksNotFound = errors.New("книги не найдены")
 )
 
 type Book struct {
@@ -9,24 +16,27 @@ type Book struct {
 	ID          int    `gorm:"primaryKey;autoIncrement"`
 	Title       string `gorm:"unique; not null"`
 	Description string
-	AuthorID    int     `gorm:"not null"`
-	Price       float64 `gorm:"not null"`
-	Year        int     `gorm:"not null"`
+	Publisher   BookPublisher `gorm:"foreignKey:PublisherID; not null"`
+	Authors     []BookAuthor  `gorm:"many2many:book_book_authors"`
+	Price       float64       `gorm:"not null"`
+	Year        int           `gorm:"not null"`
 
-	Author BookAuthor `gorm:"foreignKey:AuthorID" json:"-"`
+	PublisherID int `json:"-"`
 }
 
 func NewBook(
 	title string,
 	description string,
-	authorID int,
+	publisher BookPublisher,
+	authors []BookAuthor,
 	price float64,
 	year int,
-) *Book {
-	return &Book{
+) Book {
+	return Book{
 		Title:       title,
 		Description: description,
-		AuthorID:    authorID,
+		Publisher:   publisher,
+		Authors:     authors,
 		Price:       price,
 		Year:        year,
 	}

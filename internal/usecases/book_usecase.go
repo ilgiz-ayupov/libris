@@ -1,25 +1,31 @@
 package usecases
 
 import (
-	"database/sql"
 	"log/slog"
 
 	"github.com/ilgiz-ayupov/libris/internal/entities"
+	"github.com/ilgiz-ayupov/libris/pkg/gensql"
 	"gorm.io/gorm"
 )
 
 type BookUseCase struct {
-	log      *slog.Logger
-	bookRepo BookRepository
+	log               *slog.Logger
+	bookRepo          BookRepository
+	bookAuthorRepo    BookAuthorRepository
+	bookPublisherRepo BookPublisherRepository
 }
 
 func NewBookUseCase(
 	log *slog.Logger,
 	bookRepo BookRepository,
+	bookAuthorRepo BookAuthorRepository,
+	bookPublisherRepo BookPublisherRepository,
 ) *BookUseCase {
 	return &BookUseCase{
-		log:      log,
-		bookRepo: bookRepo,
+		log:               log,
+		bookRepo:          bookRepo,
+		bookAuthorRepo:    bookAuthorRepo,
+		bookPublisherRepo: bookPublisherRepo,
 	}
 }
 
@@ -27,22 +33,39 @@ func (u *BookUseCase) CreateBook(
 	tx *gorm.DB,
 	title string,
 	description string,
-	authorID int,
+	publisherID int,
+	authorIDs []int,
 	price float64,
 	year int,
-) (*entities.Book, error) {
+) (entities.Book, error) {
+	authors, err := gensql.LoadRequiredData(func() ([]entities.BookAuthor, error) {
+		return u.bookAuthorRepo.FindBookAuthorsByID(tx, authorIDs)
+	}, u.log, entities.ErrBookAuthorsNotFound, "не удалось создать книгу")
+	if err != nil {
+		return entities.Book{}, err
+	}
+
+	publisher, err := gensql.LoadRequiredData(func() (entities.BookPublisher, error) {
+		return u.bookPublisherRepo.FindBookPublisherByID(tx, publisherID)
+	}, u.log, entities.ErrBookPublisherNotFound, "не удалось создать книгу")
+	if err != nil {
+		return entities.Book{}, err
+	}
+
 	book := entities.NewBook(
 		title,
 		description,
-		authorID,
+		publisher,
+		authors,
 		price,
 		year,
 	)
 
-	if err := u.bookRepo.Create(tx, book); err != nil {
+	if err := u.bookRepo.CreateBook(tx, &book); err != nil {
 		u.log.Error("не удалось создать книгу", "error", err)
-		return nil, entities.ErrInternalError
+		return entities.Book{}, entities.ErrInternalError
 	}
+
 	return book, nil
 }
 
@@ -50,16 +73,14 @@ func (u *BookUseCase) FindBooks(
 	tx *gorm.DB,
 	q string,
 	startYear, endYear int,
-	author string,
 ) ([]entities.Book, error) {
-	books, err := u.bookRepo.FindBooks(tx, q, startYear, endYear, author)
-	switch err {
-	case nil:
-		return books, nil
-	case sql.ErrNoRows:
-		return nil, entities.ErrNoData
-	default:
-		u.log.Error("не удалось получить список книг", "error", err)
-		return nil, entities.ErrInternalError
-	}
+	return gensql.LoadCanNoData(func() ([]entities.Book, error) {
+		return u.bookRepo.FindBooks(tx, q, startYear, endYear)
+	}, u.log, entities.ErrBooksNotFound, "не удалось найти книги")
+}
+
+func (u *BookUseCase) FindBook(tx *gorm.DB, id int) (entities.Book, error) {
+	return gensql.LoadRequiredData(func() (entities.Book, error) {
+		return u.bookRepo.FindBookByID(tx, id)
+	}, u.log, entities.ErrBookNotFound, "не удалось найти книгу")
 }

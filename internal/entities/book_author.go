@@ -1,15 +1,19 @@
 package entities
 
-import "gorm.io/gorm"
+import (
+	"errors"
+
+	"gorm.io/gorm"
+)
+
+var (
+	ErrBookAuthorsNotFound = errors.New("авторы не найдены")
+)
 
 type BookAuthor struct {
 	gorm.Model
-	ID   int    `gorm:"primaryKey;autoIncrement"`
-	Name string `gorm:"unique; not null"`
-}
-
-func NewBookAuthor(name string) *BookAuthor {
-	return &BookAuthor{
-		Name: name,
-	}
+	ID        int     `gorm:"primaryKey;autoIncrement"`
+	FIO       string  `gorm:"unique; not null"`
+	Biography string  `gorm:"not null"`
+	Rating    float64 `gorm:"not null"`
 }

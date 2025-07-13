@@ -35,13 +35,15 @@ func (h *BookHandler) RegisterRoutes() {
 	g := h.engine.Group("/books")
 	g.Post("/", h.createBook)
 	g.Get("/", h.findBooks)
+	g.Get("/:id", h.findBook)
 }
 
 func (h *BookHandler) createBook(c *fiber.Ctx) error {
 	type Param struct {
 		Title       string
 		Description string
-		AuthorID    int
+		PublisherID int
+		AuthorIDs   []int
 		Price       float64
 		Year        int
 	}
@@ -52,24 +54,24 @@ func (h *BookHandler) createBook(c *fiber.Ctx) error {
 		return genfiber.SendError(c, err)
 	}
 
-	return genfiber.ExecReturn(c, func(tx *gorm.DB) (*entities.Book, error) {
+	return genfiber.ExecReturn(c, func(tx *gorm.DB) (entities.Book, error) {
 		return h.bookUseCase.CreateBook(
 			tx,
 			p.Title,
 			p.Description,
-			p.AuthorID,
+			p.PublisherID,
+			p.AuthorIDs,
 			p.Price,
 			p.Year,
 		)
 	}, h.db, h.log)
-
 }
 
 func (h *BookHandler) findBooks(c *fiber.Ctx) error {
 	q := c.Query("q")
 	startYear := c.QueryInt("start_year")
 	endYear := c.QueryInt("end_year")
-	author := c.Query("author")
+	// TODO: добавить поиск по: автору, редактору
 
 	return genfiber.LoadData(c, func(tx *gorm.DB) ([]entities.Book, error) {
 		return h.bookUseCase.FindBooks(
@@ -77,7 +79,18 @@ func (h *BookHandler) findBooks(c *fiber.Ctx) error {
 			q,
 			startYear,
 			endYear,
-			author,
 		)
+	}, h.db, h.log)
+}
+
+func (h *BookHandler) findBook(c *fiber.Ctx) error {
+	id, err := c.ParamsInt("id")
+	if err != nil {
+		h.log.Debug("получены некорректные параметры", "error", err)
+		return genfiber.SendError(c, err)
+	}
+
+	return genfiber.LoadData(c, func(tx *gorm.DB) (entities.Book, error) {
+		return h.bookUseCase.FindBook(tx, id)
 	}, h.db, h.log)
 }

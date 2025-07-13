@@ -33,15 +33,16 @@ func NewApp() *App {
 	}
 
 	db.AutoMigrate(
-		&entities.BookAuthor{
-			Name: "Ilgiz Ayupov",
-		},
+		&entities.BookAuthor{},
 		&entities.Book{},
+		&entities.BookPublisher{},
 	)
 
 	bookRepo := postgres.NewBookRepository()
+	bookAuthorRepo := postgres.NewBookAuthorRepository()
+	bookPublisherRepo := postgres.NewBookPublisherRepository()
 
-	bookUseCase := usecases.NewBookUseCase(log, bookRepo)
+	bookUseCase := usecases.NewBookUseCase(log, bookRepo, bookAuthorRepo, bookPublisherRepo)
 
 	return &App{
 		db:          db,
