@@ -2,8 +2,6 @@ package entities
 
 import (
 	"errors"
-
-	"gorm.io/gorm"
 )
 
 var (
@@ -12,7 +10,6 @@ var (
 )
 
 type Book struct {
-	gorm.Model
 	ID          int    `gorm:"primaryKey;autoIncrement"`
 	Title       string `gorm:"unique; not null"`
 	Description string
@@ -20,11 +17,10 @@ type Book struct {
 	Authors     []BookAuthor  `gorm:"many2many:book_book_authors"`
 	Price       float64       `gorm:"not null"`
 	Year        int           `gorm:"not null"`
-
-	PublisherID int `json:"-"`
 }
 
 func NewBook(
+	bookID int,
 	title string,
 	description string,
 	publisher BookPublisher,
@@ -33,6 +29,7 @@ func NewBook(
 	year int,
 ) Book {
 	return Book{
+		ID:          bookID,
 		Title:       title,
 		Description: description,
 		Publisher:   publisher,
@@ -40,4 +37,13 @@ func NewBook(
 		Price:       price,
 		Year:        year,
 	}
+}
+
+type BookCreateParam struct {
+	Title       string  `json:"title"`
+	Description string  `json:"description"`
+	PublisherID int     `json:"publisher_id"`
+	AuthorIDs   []int   `json:"author_ids"`
+	Price       float64 `json:"price"`
+	Year        int     `json:"year"`
 }

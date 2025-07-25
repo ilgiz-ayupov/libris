@@ -6,19 +6,19 @@ import (
 	"github.com/ilgiz-ayupov/libris/internal/usecases"
 	"github.com/ilgiz-ayupov/libris/pkg/genfiber"
 	"github.com/ilgiz-ayupov/libris/pkg/logger"
-	"gorm.io/gorm"
+	"github.com/jmoiron/sqlx"
 )
 
 type BookHandler struct {
 	engine      *fiber.App
-	db          *gorm.DB
+	db          *sqlx.DB
 	log         logger.Logger
 	bookUseCase *usecases.BookUseCase
 }
 
 func NewBookHandler(
 	engine *fiber.App,
-	db *gorm.DB,
+	db *sqlx.DB,
 	log logger.Logger,
 	bookUseCase *usecases.BookUseCase,
 ) *BookHandler {
@@ -33,63 +33,16 @@ func NewBookHandler(
 func (h *BookHandler) RegisterRoutes() {
 	g := h.engine.Group("/books")
 	g.Post("/", h.createBook)
-	g.Get("/", h.findBooks)
-	g.Get("/:id", h.findBook)
 }
 
 func (h *BookHandler) createBook(c *fiber.Ctx) error {
-	type Param struct {
-		Title       string
-		Description string
-		PublisherID int
-		AuthorIDs   []int
-		Price       float64
-		Year        int
-	}
-
-	var p Param
+	var p entities.BookCreateParam
 	if err := c.BodyParser(&p); err != nil {
 		h.log.Debug("получены некорректные параметры", "error", err)
 		return genfiber.SendError(c, err)
 	}
 
-	return genfiber.ExecReturn(c, func(tx *gorm.DB) (entities.Book, error) {
-		return h.bookUseCase.CreateBook(
-			tx,
-			p.Title,
-			p.Description,
-			p.PublisherID,
-			p.AuthorIDs,
-			p.Price,
-			p.Year,
-		)
-	}, h.db, h.log)
-}
-
-func (h *BookHandler) findBooks(c *fiber.Ctx) error {
-	q := c.Query("q")
-	startYear := c.QueryInt("start_year")
-	endYear := c.QueryInt("end_year")
-	// TODO: добавить поиск по: автору, редактору
-
-	return genfiber.LoadData(c, func(tx *gorm.DB) ([]entities.Book, error) {
-		return h.bookUseCase.FindBooks(
-			tx,
-			q,
-			startYear,
-			endYear,
-		)
-	}, h.db, h.log)
-}
-
-func (h *BookHandler) findBook(c *fiber.Ctx) error {
-	id, err := c.ParamsInt("id")
-	if err != nil {
-		h.log.Debug("получены некорректные параметры", "error", err)
-		return genfiber.SendError(c, err)
-	}
-
-	return genfiber.LoadData(c, func(tx *gorm.DB) (entities.Book, error) {
-		return h.bookUseCase.FindBook(tx, id)
+	return genfiber.ExecReturn(c, func(tx *sqlx.Tx) (entities.Book, error) {
+		return h.bookUseCase.CreateBook(tx, p)
 	}, h.db, h.log)
 }

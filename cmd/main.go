@@ -5,15 +5,14 @@ import (
 	"github.com/ilgiz-ayupov/libris/config"
 	"github.com/ilgiz-ayupov/libris/internal/adapters/handlers"
 	"github.com/ilgiz-ayupov/libris/internal/adapters/postgres"
-	"github.com/ilgiz-ayupov/libris/internal/entities"
 	"github.com/ilgiz-ayupov/libris/internal/usecases"
 	"github.com/ilgiz-ayupov/libris/pkg/logger"
 	"github.com/ilgiz-ayupov/libris/pkg/pgdb"
-	"gorm.io/gorm"
+	"github.com/jmoiron/sqlx"
 )
 
 type App struct {
-	db   *gorm.DB
+	db   *sqlx.DB
 	log  logger.Logger
 	conf *config.Config
 
@@ -28,12 +27,6 @@ func NewApp() *App {
 		log.Error("не удалось подключиться к БД", "error", err)
 		return nil
 	}
-
-	db.AutoMigrate(
-		&entities.BookAuthor{},
-		&entities.Book{},
-		&entities.BookPublisher{},
-	)
 
 	bookRepo := postgres.NewBookRepository()
 	bookAuthorRepo := postgres.NewBookAuthorRepository()

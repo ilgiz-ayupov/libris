@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"github.com/ilgiz-ayupov/libris/internal/entities"
-	"github.com/ilgiz-ayupov/libris/pkg/gensql"
 	"gorm.io/gorm"
 )
 
@@ -13,7 +12,11 @@ func NewBookPublisherRepository() *bookPublisherRepository {
 }
 
 func (r *bookPublisherRepository) FindBookPublisherByID(tx *gorm.DB, id int) (entities.BookPublisher, error) {
-	query := tx.Model(&entities.BookPublisher{})
+	query := `
+		SELECT publisher_id, name, description
+		FROM book_publishers
+		WHERE publisher_id = ?
+	`
 
-	return gensql.Get[entities.BookPublisher](query, id)
+	return entities.BookPublisher{}, nil
 }

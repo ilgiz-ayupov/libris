@@ -16,17 +16,30 @@ services:
       retries: 5
     volumes:
       - db_data:/var/lib/postgresql/data
+  migrate:
+    image: migrate/migrate
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./migrations:/migrations
+    entrypoint: [
+      "migrate",
+      "-path", "/migrations",
+      "-database", "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/${POSTGRES_DB}?sslmode=${POSTGRES_SSL_MODE}",
+      "up"
+    ]
   server:
     build:
       context: .
     container_name: libris_server
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
     ports:
       - "${SERVER_PORT}:${SERVER_PORT}"
     environment:
       POSTGRES_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/${POSTGRES_DB}?sslmode=${POSTGRES_SSL_MODE}
       SERVER_PORT: ${SERVER_PORT}
-    depends_on:
-      postgres:
-        condition: service_healthy
 volumes:
   db_data:

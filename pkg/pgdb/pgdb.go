@@ -1,10 +1,18 @@
 package pgdb
 
 import (
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
+	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq"
 )
 
-func Connect(url string) (*gorm.DB, error) {
-	return gorm.Open(postgres.Open(url), &gorm.Config{})
+func Connect(url string) (*sqlx.DB, error) {
+	db, err := sqlx.Open("postgres", url)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := db.Ping(); err != nil {
+		return nil, err
+	}
+	return db, nil
 }
