@@ -3,8 +3,8 @@ FROM golang:1.24.4 AS builder
 
 WORKDIR /app
 
-ENV NAME=server \
-    CGO_ENABLED=0 \
+ARG NAME
+ENV CGO_ENABLED=0 \
     GO111MODULE=on
 
 COPY go.mod go.sum ./
@@ -21,8 +21,8 @@ FROM ubuntu:24.04
 
 WORKDIR /app
 
-ENV NAME=server \
-    TZ="Asia/Tashkent" \
+ARG NAME
+ENV TZ="Asia/Tashkent" \
     DEBIAN_FRONTEND=noninteractive
 
 COPY --from=builder /app/${NAME} .

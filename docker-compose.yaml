@@ -22,10 +22,10 @@ services:
       postgres:
         condition: service_healthy
     volumes:
-      - ./migrations:/migrations
+      - ./${MIGRATIONS_DIR}:/${MIGRATIONS_DIR}
     entrypoint: [
       "migrate",
-      "-path", "/migrations",
+      "-path", "/${MIGRATIONS_DIR}",
       "-database", "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/${POSTGRES_DB}?sslmode=${POSTGRES_SSL_MODE}",
       "up"
     ]
@@ -39,6 +39,7 @@ services:
   #   ports:
   #     - "${SERVER_PORT}:${SERVER_PORT}"
   #   environment:
+  #     NAME: ${NAME}
   #     POSTGRES_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/${POSTGRES_DB}?sslmode=${POSTGRES_SSL_MODE}
   #     SERVER_PORT: ${SERVER_PORT}
 volumes:
