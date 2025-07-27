@@ -1,10 +1,9 @@
 package main
 
 import (
-	"github.com/gofiber/fiber/v2"
 	"github.com/ilgiz-ayupov/libris/config"
-	"github.com/ilgiz-ayupov/libris/internal/adapters/handlers"
 	"github.com/ilgiz-ayupov/libris/internal/adapters/postgres"
+	"github.com/ilgiz-ayupov/libris/internal/ui/httpserver"
 	"github.com/ilgiz-ayupov/libris/internal/usecases"
 	"github.com/ilgiz-ayupov/libris/pkg/logger"
 	"github.com/ilgiz-ayupov/libris/pkg/pgdb"
@@ -42,20 +41,9 @@ func NewApp() *App {
 	}
 }
 
-func (a *App) StartServer() error {
-	app := fiber.New(fiber.Config{})
-
-	bookHandler := handlers.NewBookHandler(app, a.db, a.log, a.bookUseCase)
-	bookHandler.RegisterRoutes()
-
-	a.log.Info("Сервер запущен", "address", a.conf.Server.Address)
-	return app.Listen(a.conf.Server.Address)
-}
-
 func main() {
 	app := NewApp()
 
-	if err := app.StartServer(); err != nil {
-		app.log.Error("не удалось запустить сервер", "error", err)
-	}
+	httpServer := httpserver.NewHTTPServer(app.db, app.log, app.bookUseCase)
+	httpServer.Run(app.conf.Server.Address)
 }

@@ -1,4 +1,4 @@
-package handlers
+package httpserver
 
 import (
 	"github.com/gofiber/fiber/v2"
