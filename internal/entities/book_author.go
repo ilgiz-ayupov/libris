@@ -2,8 +2,6 @@ package entities
 
 import (
 	"errors"
-
-	"gorm.io/gorm"
 )
 
 var (
@@ -11,9 +9,8 @@ var (
 )
 
 type BookAuthor struct {
-	gorm.Model
-	ID        int     `gorm:"primaryKey;autoIncrement"`
-	FIO       string  `gorm:"unique; not null"`
-	Biography string  `gorm:"not null"`
-	Rating    float64 `gorm:"not null"`
+	ID        int     `db:"author_id"`
+	FIO       string  `db:"fio"`
+	Biography string  `db:"biography"`
+	Rating    float64 `db:"rating"`
 }

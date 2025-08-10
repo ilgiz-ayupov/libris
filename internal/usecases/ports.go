@@ -7,11 +7,11 @@ import (
 
 type BookRepository interface {
 	CreateBook(tx *sqlx.Tx, param entities.BookCreateParam) (bookID int, err error)
-	BulkSaveBookAuthors(tx *sqlx.Tx, authorIDs []int) error
 }
 
 type BookAuthorRepository interface {
 	FindBookAuthorsByID(tx *sqlx.Tx, authorIDs []int) ([]entities.BookAuthor, error)
+	BulkSaveBookAuthors(tx *sqlx.Tx, bookID int, authorIDs []int) error
 }
 
 type BookPublisherRepository interface {

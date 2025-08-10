@@ -1,13 +1,21 @@
 package gensql
 
 import (
+	"database/sql"
+
 	"github.com/ilgiz-ayupov/libris/internal/entities"
-	"gorm.io/gorm"
+	"github.com/jmoiron/sqlx"
 )
 
-func Select[T any](query *gorm.DB, conds ...any) ([]T, error) {
+func Select[T any](tx *sqlx.Tx, query string, args map[string]any) ([]T, error) {
+	stmt, err := tx.PrepareNamed(query)
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+
 	var data []T
-	if err := query.Find(&data, conds...).Error; err != nil {
+	if err := stmt.Select(&data, args); err != nil {
 		return nil, err
 	}
 
@@ -18,16 +26,50 @@ func Select[T any](query *gorm.DB, conds ...any) ([]T, error) {
 	return data, nil
 }
 
-func Get[T any](query *gorm.DB, conds ...any) (T, error) {
-	var zero T
+func Get[T any](tx *sqlx.Tx, query string, args map[string]any) (T, error) {
+	var (
+		zero T
+		data T
+	)
 
-	var data T
-	switch err := query.First(&data, conds...).Error; err {
+	stmt, err := tx.PrepareNamed(query)
+	if err != nil {
+		return zero, err
+	}
+	defer stmt.Close()
+
+	switch err := stmt.Get(&data, args); err {
 	case nil:
 		return data, nil
-	case gorm.ErrRecordNotFound:
+	case sql.ErrNoRows:
 		return zero, entities.ErrNoData
 	default:
 		return zero, err
 	}
+}
+
+func SelectRebind[T any](tx *sqlx.Tx, query string, args map[string]any) ([]T, error) {
+	query, params, err := sqlx.Named(query, args)
+	if err != nil {
+		return nil, err
+	}
+
+	query, params, err = sqlx.In(query, params...)
+	if err != nil {
+		return nil, err
+	}
+
+	query = tx.Rebind(query)
+
+	var data []T
+	err = tx.Select(&data, query, params...)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(data) == 0 {
+		return nil, entities.ErrNoData
+	}
+
+	return data, nil
 }

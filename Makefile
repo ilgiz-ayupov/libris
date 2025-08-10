@@ -1,8 +1,6 @@
-NAME=libris
 MIGRATIONS_DIR=migrations
 
 run:
-	NAME=${NAME} \
 	MIGRATIONS_DIR=${MIGRATIONS_DIR} \
 		docker compose up --force-recreate --remove-orphans
 clear:

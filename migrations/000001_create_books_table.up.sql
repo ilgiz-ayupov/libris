@@ -3,7 +3,10 @@ CREATE TABLE books (
     title VARCHAR(255) NOT NULL,
     description TEXT,
     price DECIMAL NOT NULL,
-    year INTEGER NOT NULL
+    year INTEGER NOT NULL,
+    created_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    deleted_date TIMESTAMP WITH TIME ZONE NULL
 );
 
 INSERT INTO books (title, description, price, year) VALUES

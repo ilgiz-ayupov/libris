@@ -10,40 +10,40 @@ var (
 )
 
 type Book struct {
-	ID          int    `gorm:"primaryKey;autoIncrement"`
-	Title       string `gorm:"unique; not null"`
-	Description string
-	Publisher   BookPublisher `gorm:"foreignKey:PublisherID; not null"`
-	Authors     []BookAuthor  `gorm:"many2many:book_book_authors"`
-	Price       float64       `gorm:"not null"`
-	Year        int           `gorm:"not null"`
+	ID          int     `db:"book_id"`
+	Title       string  `db:"title"`
+	Description string  `db:"description"`
+	Price       float64 `db:"price"`
+	Year        int     `db:"year"`
+	Publisher   BookPublisher
+	Authors     []BookAuthor
 }
 
 func NewBook(
 	bookID int,
 	title string,
 	description string,
-	publisher BookPublisher,
-	authors []BookAuthor,
 	price float64,
 	year int,
+	publisher BookPublisher,
+	authors []BookAuthor,
 ) Book {
 	return Book{
 		ID:          bookID,
 		Title:       title,
 		Description: description,
-		Publisher:   publisher,
-		Authors:     authors,
 		Price:       price,
 		Year:        year,
+		Publisher:   publisher,
+		Authors:     authors,
 	}
 }
 
 type BookCreateParam struct {
 	Title       string  `json:"title"`
 	Description string  `json:"description"`
-	PublisherID int     `json:"publisher_id"`
-	AuthorIDs   []int   `json:"author_ids"`
 	Price       float64 `json:"price"`
 	Year        int     `json:"year"`
+	PublisherID int     `json:"publisher_id"`
+	AuthorIDs   []int   `json:"author_ids"`
 }

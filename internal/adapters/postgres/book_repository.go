@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"github.com/ilgiz-ayupov/libris/internal/entities"
+	"github.com/ilgiz-ayupov/libris/pkg/gensql"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -13,14 +14,16 @@ func NewBookRepository() *bookRepository {
 
 func (r *bookRepository) CreateBook(tx *sqlx.Tx, param entities.BookCreateParam) (bookID int, err error) {
 	query := `
-		INSERT INTO books (title, description, publisher_id, price, year)
-		VALUES (?, ?, ?, ?, ?)
+		INSERT INTO books (title, description, price, year, publisher_id)
+		VALUES (:title, :description, :price, :year, :publisher_id)
 		RETURNING book_id
 	`
 
-	return 0, nil
-}
-
-func (r *bookRepository) BulkSaveBookAuthors(tx *sqlx.Tx, authorIDs []int) error {
-	return nil
+	return gensql.ExecReturnID[int](tx, query, map[string]any{
+		"title":        param.Title,
+		"description":  param.Description,
+		"price":        param.Price,
+		"year":         param.Year,
+		"publisher_id": param.PublisherID,
+	})
 }
